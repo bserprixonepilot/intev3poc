@@ -11,7 +11,9 @@ class IntegrationResolver
 {
     private function findMatchingProviderFor(callable $callback): ?AbstractIntegrationServiceProvider
     {
-        return collect(config('integrations.providers'))->first($callback);
+        return collect(config('integrations.providers'))
+            ->filter(fn(AbstractIntegrationServiceProvider $provider) => $provider->isActive())
+            ->first($callback);
     }
 
     public function resolveWebhookHandler(Request $request): AbstractWebhookHandler

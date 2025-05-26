@@ -41,4 +41,9 @@ abstract class AbstractIntegrationServiceProvider extends ServiceProvider
     {
         $this->loadConfig();
     }
+
+    public function isActive(): bool
+    {
+        return !! config('integrations.' . $this->getIntegrationName() . '.active');
+    }
 }
