@@ -3,6 +3,8 @@
 namespace App\Integrations\Gorgias;
 
 use App\Integrations\Base\AbstractWebhookHandler;
+use App\Integrations\Gorgias\Requests\WebhookRequest;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 
 class GorgiasWebhookHandler extends AbstractWebhookHandler
@@ -13,8 +15,14 @@ class GorgiasWebhookHandler extends AbstractWebhookHandler
         return $request->get('from') === 'gorgias';
     }
 
-    public static function handle(Request $request): void
+    public static function getRequestClass(): FormRequest|string
     {
+        return WebhookRequest::class;
+    }
+
+    public static function handle(): void
+    {
+        // todo : perform processes, database storage, etc...
         dump('Webhook handled by Gorgias integration');
     }
 }

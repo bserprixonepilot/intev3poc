@@ -3,6 +3,8 @@
 namespace App\Integrations\Zendesk;
 
 use App\Integrations\Base\AbstractWebhookHandler;
+use App\Integrations\Zendesk\Requests\WebhookRequest;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 
 class ZendeskWebhookHandler extends AbstractWebhookHandler
@@ -13,8 +15,14 @@ class ZendeskWebhookHandler extends AbstractWebhookHandler
         return $request->get('from') === 'zendesk';
     }
 
-    public static function handle(Request $request): void
+    public static function getRequestClass(): FormRequest|string
     {
+        return WebhookRequest::class;
+    }
+
+    public static function handle(): void
+    {
+        // todo : perform processes, database storage, etc...
         dump('Webhook handled by Zendesk integration');
     }
 }

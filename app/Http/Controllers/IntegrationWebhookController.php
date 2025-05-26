@@ -14,7 +14,10 @@ class IntegrationWebhookController extends Controller
     public function __invoke(Request $request)
     {
         //todo : do not return Response from the webhook handler since it will be done in ASYNC in fine
-        app(IntegrationResolver::class)->resolveWebhookHandler($request)->handle($request);
+        $webhookHandler = app(IntegrationResolver::class)->resolveWebhookHandler($request);
+
+        $webhookHandler->performChecks();
+        $webhookHandler->handle();
 
         // todo : instead of handling the webhook directly, may be store it raw and dispatch afterwards ?
         // todo : or at least handle a few checks to see if the webhook should be stored and handled later
