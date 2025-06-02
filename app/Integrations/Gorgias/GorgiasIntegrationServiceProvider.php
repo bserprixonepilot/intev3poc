@@ -3,13 +3,12 @@
 namespace App\Integrations\Gorgias;
 
 use App\Integrations\Base\AbstractIntegrationServiceProvider;
-use App\Integrations\Base\AbstractWebhookHandler;
 
 class GorgiasIntegrationServiceProvider extends AbstractIntegrationServiceProvider
 {
     public const INTEGRATION_NAME = 'gorgias';
 
-    protected static function getIntegrationName(): string
+    public static function getIntegrationName(): string
     {
         return self::INTEGRATION_NAME;
     }
@@ -19,7 +18,7 @@ class GorgiasIntegrationServiceProvider extends AbstractIntegrationServiceProvid
         return dirname(__FILE__) . '/Config/gorgias.php';
     }
 
-    public function getWebhookHandlerClass(): AbstractWebhookHandler|string
+    public function getWebhookHandlerClass(): string
     {
         return GorgiasWebhookHandler::class;
     }
