@@ -3,30 +3,47 @@
 namespace App\Integrations\Base;
 
 use App\Exceptions\MissingIntegrationConfigException;
+use App\Integrations\Contracts\IntegrationServiceProviderInterface;
+use App\Integrations\Contracts\WebhookHandlerInterface;
 use Illuminate\Support\ServiceProvider;
 
-abstract class AbstractIntegrationServiceProvider extends ServiceProvider
+abstract class AbstractIntegrationServiceProvider extends ServiceProvider implements IntegrationServiceProviderInterface
 {
-    abstract protected static function getIntegrationName(): string;
+    /**
+     * Get the name of the integration.
+     */
+    abstract public static function getIntegrationName(): string;
 
+    /**
+     * Get the path to the configuration file.
+     */
     abstract protected function getConfigFilePath(): string;
 
-    abstract public function getWebhookHandlerClass(): AbstractWebhookHandler | string;
+    /**
+     * Get the webhook handler class for this integration.
+     */
+    abstract public function getWebhookHandlerClass(): string;
 
+    /**
+     * Load the configuration file.
+     */
     protected function loadConfig(): void
     {
-        $this->mergeConfigFrom($this->getConfigFilePath(), 'integrations.' . $this->getIntegrationName());
+        $this->mergeConfigFrom($this->getConfigFilePath(), 'integrations.' . static::getIntegrationName());
 
         $this->validateConfig();
     }
 
+    /**
+     * Validate the configuration.
+     */
     protected function validateConfig(): void
     {
         $mandatoryKeys = ['active'];
 
         foreach($mandatoryKeys as $key) {
-            if (null === config('integrations.' . $this->getIntegrationName() . '.' . $key)) {
-                throw new MissingIntegrationConfigException($this->getIntegrationName(), $key);
+            if (null === config('integrations.' . static::getIntegrationName() . '.' . $key)) {
+                throw new MissingIntegrationConfigException(static::getIntegrationName(), $key);
             }
         }
 
@@ -42,8 +59,11 @@ abstract class AbstractIntegrationServiceProvider extends ServiceProvider
         $this->loadConfig();
     }
 
+    /**
+     * Check if the integration is active.
+     */
     public function isActive(): bool
     {
-        return !! config('integrations.' . $this->getIntegrationName() . '.active');
+        return !! config('integrations.' . static::getIntegrationName() . '.active');
     }
 }

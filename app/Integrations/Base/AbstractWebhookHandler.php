@@ -2,16 +2,20 @@
 
 namespace App\Integrations\Base;
 
+use App\Integrations\Contracts\WebhookHandlerInterface;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 
-abstract class AbstractWebhookHandler
+abstract class AbstractWebhookHandler implements WebhookHandlerInterface
 {
     protected FormRequest $request;
 
     abstract public static function shouldHandleForRequest(Request $request): bool;
 
-    abstract public static function getRequestClass(): FormRequest|string;
+    /**
+     * Get the FormRequest class to use for validation.
+     */
+    abstract protected static function getRequestClass(): string;
 
     public function performChecks(): void
     {
@@ -19,5 +23,8 @@ abstract class AbstractWebhookHandler
         $this->request = app(static::getRequestClass());
     }
 
-    abstract public static function handle(): void;
+    /**
+     * Handle the webhook.
+     */
+    abstract public function handle(): void;
 }

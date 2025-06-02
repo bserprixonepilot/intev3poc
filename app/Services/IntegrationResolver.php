@@ -3,29 +3,68 @@
 namespace App\Services;
 
 use App\Exceptions\WebhookCannotBeHandledException;
-use App\Integrations\Base\AbstractIntegrationServiceProvider;
-use App\Integrations\Base\AbstractWebhookHandler;
+use App\Factories\WebhookHandlerFactory;
+use App\Integrations\Contracts\WebhookHandlerInterface;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 
 class IntegrationResolver
 {
-    private function findMatchingProviderFor(callable $callback): ?AbstractIntegrationServiceProvider
+    /**
+     * The webhook handler factory instance.
+     */
+    protected WebhookHandlerFactory $webhookHandlerFactory;
+
+    /**
+     * Create a new integration resolver instance.
+     */
+    public function __construct(WebhookHandlerFactory $webhookHandlerFactory)
     {
-        return collect(config('integrations.providers'))
-            ->filter(fn(AbstractIntegrationServiceProvider $provider) => $provider->isActive())
-            ->first($callback);
+        $this->webhookHandlerFactory = $webhookHandlerFactory;
     }
 
-    public function resolveWebhookHandler(Request $request): AbstractWebhookHandler
+    /**
+     * Find an integration that can handle the given request.
+     */
+    public function findIntegrationForRequest(Request $request): ?string
     {
-        $provider = $this->findMatchingProviderFor(function(AbstractIntegrationServiceProvider $provider) use ($request) {
-            return $provider->getWebhookHandlerClass()::shouldHandleForRequest($request);
-        });
+        $integrations = Config::get('integrations');
 
-        if (null === $provider) {
-            throw new WebhookCannotBeHandledException();
+        foreach ($integrations as $name => $config) {
+            // Skip non-integration configs
+            if (!is_array($config) || !isset($config['active']) || !isset($config['webhook_handler'])) {
+                continue;
+            }
+
+            // Skip inactive integrations
+            if (!$config['active']) {
+                continue;
+            }
+
+            $handlerClass = $config['webhook_handler'];
+
+            // Skip if the handler class doesn't exist or can't handle the request
+            if (!class_exists($handlerClass) || !$handlerClass::shouldHandleForRequest($request)) {
+                continue;
+            }
+
+            return $name;
         }
 
-        return new ($provider->getWebhookHandlerClass());
+        return null;
+    }
+
+    /**
+     * Resolve a webhook handler for the given request.
+     */
+    public function resolveWebhookHandler(Request $request): WebhookHandlerInterface
+    {
+        $integrationName = $this->findIntegrationForRequest($request);
+
+        if (null === $integrationName) {
+            throw new WebhookCannotBeHandledException("No integration found that can handle this request");
+        }
+
+        return $this->webhookHandlerFactory->create($integrationName);
     }
 }
